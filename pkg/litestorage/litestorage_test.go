@@ -121,3 +121,5 @@ func TestLiteStorage_TrimmedConfigBase64(t *testing.T) {
 		require.True(t, ok)
 	}
 }
+
+// No additional unit tests needed for the selected code.
