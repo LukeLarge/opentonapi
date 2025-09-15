@@ -469,15 +469,14 @@ func (h *Handler) EmulateMessageToAccountEvent(ctx context.Context, request *oas
 			txemulator.WithConfigBase64(configBase64),
 			txemulator.WithLimit(1100),
 		}
-		depth := 0
 		if params.IgnoreSignatureCheck.Value {
-			depth = 1000000
+			options = append(options, txemulator.WithIgnoreSignatureDepth(1000000))
 		}
 		emulator, err := txemulator.NewTraceBuilder(options...)
 		if err != nil {
 			return nil, toError(http.StatusInternalServerError, err)
 		}
-		tree, emulationErr := emulator.Run(ctx, m, depth)
+		tree, emulationErr := emulator.Run(ctx, m)
 		if emulationErr != nil {
 			return nil, toProperEmulationError(emulationErr)
 		}
@@ -533,16 +532,14 @@ func (h *Handler) EmulateMessageToEvent(ctx context.Context, request *oas.Emulat
 			txemulator.WithAccountsSource(h.storage),
 			txemulator.WithConfigBase64(configBase64),
 		}
-		depth := 0
 		if params.IgnoreSignatureCheck.Value {
-			depth = 1000000
+			options = append(options, txemulator.WithIgnoreSignatureDepth(1000000))
 		}
-
 		emulator, err := txemulator.NewTraceBuilder(options...)
 		if err != nil {
 			return nil, toError(http.StatusInternalServerError, err)
 		}
-		tree, emulationErr := emulator.Run(ctx, m, depth)
+		tree, emulationErr := emulator.Run(ctx, m)
 		if emulationErr != nil {
 			return nil, toProperEmulationError(emulationErr)
 		}
@@ -600,16 +597,14 @@ func (h *Handler) EmulateMessageToTrace(ctx context.Context, request *oas.Emulat
 			txemulator.WithAccountsSource(h.storage),
 			txemulator.WithConfigBase64(configBase64),
 		}
-		depth := 0
 		if params.IgnoreSignatureCheck.Value {
-			depth = 1000000
+			options = append(options, txemulator.WithIgnoreSignatureDepth(1000000))
 		}
-
 		emulator, err := txemulator.NewTraceBuilder(options...)
 		if err != nil {
 			return nil, toError(http.StatusInternalServerError, err)
 		}
-		tree, emulationErr := emulator.Run(ctx, m, depth)
+		tree, emulationErr := emulator.Run(ctx, m)
 		if emulationErr != nil {
 			return nil, toProperEmulationError(emulationErr)
 		}
@@ -702,7 +697,7 @@ func (h *Handler) EmulateMessageToWallet(ctx context.Context, request *oas.Emula
 	} else if err == nil {
 		return nil, toError(http.StatusBadRequest, fmt.Errorf("code not found and message doesn't have init"))
 	} else {
-		return nil, toError(http.StatusInternalServerError, err)
+		return nil, toError(http.StatusInternalServerError, fmt.Errorf("account: %s GetRawAccount err: %w", walletAddress.ToRaw(), err))
 	}
 	walletVersion, err := wallet.GetVersionByCode(code)
 	if err != nil {
@@ -710,7 +705,7 @@ func (h *Handler) EmulateMessageToWallet(ctx context.Context, request *oas.Emula
 	}
 	risk, err := wallet.ExtractRisk(walletVersion, msgCell)
 	if err != nil {
-		return nil, toError(http.StatusInternalServerError, err)
+		return nil, toError(http.StatusInternalServerError, fmt.Errorf("account: %s GetVersionByCode err: %w", walletAddress.ToRaw(), err))
 	}
 
 	hash := m.Hash(true).Hex()
@@ -725,13 +720,14 @@ func (h *Handler) EmulateMessageToWallet(ctx context.Context, request *oas.Emula
 		}
 		configBase64, err := h.storage.TrimmedConfigBase64()
 		if err != nil {
-			return nil, toError(http.StatusInternalServerError, err)
+			return nil, toError(http.StatusInternalServerError, fmt.Errorf("account: %s TrimmedConfigBase64 err: %w", walletAddress.ToRaw(), err))
 		}
 
 		options := []txemulator.TraceOption{
 			txemulator.WithConfigBase64(configBase64),
 			txemulator.WithAccountsSource(h.storage),
 			txemulator.WithLimit(1100),
+			txemulator.WithIgnoreSignatureDepth(1),
 		}
 		accounts, err := convertEmulationParameters(request.Params)
 		if err != nil {
@@ -741,11 +737,11 @@ func (h *Handler) EmulateMessageToWallet(ctx context.Context, request *oas.Emula
 		for accountID, balance := range accounts {
 			originalState, err := h.storage.GetAccountState(ctx, accountID)
 			if err != nil {
-				return nil, toError(http.StatusInternalServerError, err)
+				return nil, toError(http.StatusInternalServerError, fmt.Errorf("account: %s GetAccountState err: %w", walletAddress.ToRaw(), err))
 			}
 			state, err := prepareAccountState(*walletAddress, originalState, balance)
 			if err != nil {
-				return nil, toError(http.StatusInternalServerError, err)
+				return nil, toError(http.StatusInternalServerError, fmt.Errorf("account: %s prepareAccountState err: %w", walletAddress.ToRaw(), err))
 			}
 			states = append(states, state)
 		}
@@ -753,9 +749,9 @@ func (h *Handler) EmulateMessageToWallet(ctx context.Context, request *oas.Emula
 		options = append(options, txemulator.WithAccounts(states...))
 		emulator, err := txemulator.NewTraceBuilder(options...)
 		if err != nil {
-			return nil, toError(http.StatusInternalServerError, err)
+			return nil, toError(http.StatusInternalServerError, fmt.Errorf("account: %s NewTraceBuilder err: %w", walletAddress.ToRaw(), err))
 		}
-		tree, emulationErr := emulator.Run(ctx, m, 1)
+		tree, emulationErr := emulator.Run(ctx, m)
 		if emulationErr != nil {
 			if saveErr := h.storage.SaveEmulationError(ctx, msgCell, hash, emulationErr); saveErr != nil {
 				h.logger.Warn("failure to save emulation error: ", zap.Error(saveErr))
@@ -764,7 +760,7 @@ func (h *Handler) EmulateMessageToWallet(ctx context.Context, request *oas.Emula
 		}
 		trace, err = EmulatedTreeToTrace(ctx, h.executor, h.storage, tree, emulator.FinalStates(), nil, h.configPool, true)
 		if err != nil {
-			return nil, toError(http.StatusInternalServerError, err)
+			return nil, toError(http.StatusInternalServerError, fmt.Errorf("account: %s EmulatedTreeToTrace err: %w", walletAddress.ToRaw(), err))
 		}
 		err = h.storage.SaveTraceWithState(ctx, hash, trace, h.tongoVersion, []abi.MethodInvocation{}, 24*time.Hour)
 		if err != nil {
@@ -778,16 +774,16 @@ func (h *Handler) EmulateMessageToWallet(ctx context.Context, request *oas.Emula
 	t := convertTrace(trace, h.addressBook)
 	actions, err := bath.FindActions(ctx, trace, bath.ForAccount(*walletAddress), bath.WithInformationSource(h.storage))
 	if err != nil {
-		return nil, toError(http.StatusInternalServerError, err)
+		return nil, toError(http.StatusInternalServerError, fmt.Errorf("account: %s FindActions err: %w", walletAddress.ToRaw(), err))
 	}
 	result := bath.EnrichWithIntentions(trace, actions)
 	event, err := h.toAccountEvent(ctx, *walletAddress, trace, result, params.AcceptLanguage, true)
 	if err != nil {
-		return nil, toError(http.StatusInternalServerError, err)
+		return nil, toError(http.StatusInternalServerError, fmt.Errorf("account: %s toAccountEvent err: %w", walletAddress.ToRaw(), err))
 	}
 	oasRisk, err := h.convertRisk(ctx, *risk, *walletAddress)
 	if err != nil {
-		return nil, toError(http.StatusInternalServerError, err)
+		return nil, toError(http.StatusInternalServerError, fmt.Errorf("account: %s convertRisk err: %w", walletAddress.ToRaw(), err))
 	}
 	consequences := oas.MessageConsequences{
 		Trace: t,

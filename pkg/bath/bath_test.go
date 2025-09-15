@@ -5,12 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/tonkeeper/opentonapi/internal/g"
 	"os"
 	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/tonkeeper/opentonapi/internal/g"
 	"github.com/tonkeeper/opentonapi/pkg/core"
 	"github.com/tonkeeper/tongo"
 	"github.com/tonkeeper/tongo/liteapi"
@@ -136,6 +136,8 @@ func TestFindActions(t *testing.T) {
 			tongo.MustParseBlockID("(0,8000000000000000,38159152)"),
 			// withdraw liquid staking
 			tongo.MustParseBlockID("(0,8000000000000000,38474426)"),
+			tongo.MustParseBlockID("(0,8000000000000000,55602899)"),
+			tongo.MustParseBlockID("(0,8000000000000000,56894296)"),
 			// dedust swap
 			tongo.MustParseBlockID("(0,8000000000000000,38293409)"),
 			// dedust swap from TON
@@ -200,6 +202,17 @@ func TestFindActions(t *testing.T) {
 			tongo.MustParseBlockID("(0,8000000000000000,55504556)"),
 			// ethena withdraw stake request
 			tongo.MustParseBlockID("(0,8000000000000000,55504824)"),
+			// bidask swap
+			tongo.MustParseBlockID("(0,8000000000000000,56384438)"),
+			tongo.MustParseBlockID("(0,8000000000000000,56435662)"),
+			tongo.MustParseBlockID("(0,8000000000000000,56435563)"),
+			// mooncx swap
+			tongo.MustParseBlockID("(0,8000000000000000,56398081)"),
+			tongo.MustParseBlockID("(0,8000000000000000,56397942)"),
+			// tonco swap
+			tongo.MustParseBlockID("(0,8000000000000000,56804640)"),
+			tongo.MustParseBlockID("(0,8000000000000000,56834937)"),
+			tongo.MustParseBlockID("(0,8000000000000000,56349139)"),
 		}),
 	)
 
@@ -534,6 +547,56 @@ func TestFindActions(t *testing.T) {
 			name:           "ethena withdraw stake request",
 			hash:           "b8336722a26a86e03b986e9c8207b94a31105e75115af62649e1a95e0d4033bc",
 			filenamePrefix: "ethena-withdraw-stake-request",
+		},
+		{
+			name:           "bidask usdt usde swap",
+			hash:           "89615121509a69920399f94aa5adfa9ac1b6b2e968ed772c7d3e6067f10530bf",
+			filenamePrefix: "bidask-usdt-usde-swap",
+		},
+		{
+			name:           "bidask usdt ton swap",
+			hash:           "93d5bee270c65516b6213ace03c84110c0c8fa2b1626f21dec5b848eb88ba334",
+			filenamePrefix: "bidask-usdt-ton-swap",
+		},
+		{
+			name:           "bidask ton usdt swap",
+			hash:           "f1cc8a4b6108c27df57a92ddb84fb25ed4f1f866c6b10c75905f34903f47edcf",
+			filenamePrefix: "bidask-ton-usdt-swap",
+		},
+		{
+			name:           "mooncx usdt-ton swap",
+			hash:           "1d1ce4629fc5613d68f066da2044354d963b982f25ba8be6ea3634f81cbbf88b",
+			filenamePrefix: "mooncx-usdt-ton-swap",
+		},
+		{
+			name:           "mooncx ton-usdt swap",
+			hash:           "67aee84fa6df5fcdf85bcb9330c9181fd0629d686bf5b800420deef9e6850a99",
+			filenamePrefix: "mooncx-ton-usdt-swap",
+		},
+		{
+			name:           "tonco ton-usdt swap",
+			hash:           "780cab64043ac03070f1018f98601939a2e94681278be1c1f4908bb1779d049e",
+			filenamePrefix: "tonco-ton-usdt-swap",
+		},
+		{
+			name:           "tonco usdt-ton swap",
+			hash:           "47cda8509e406d6475f173ad5a69645b2158db3191d8c087d5bbe4e8c49474ca",
+			filenamePrefix: "tonco-usdt-ton-swap",
+		},
+		{
+			name:           "tonco storm-usdt swap",
+			hash:           "410e1fda05a63baf1ab3227886755dad96450922c400538910fbf91efc070488",
+			filenamePrefix: "tonco-storm-usdt-swap",
+		},
+		{
+			name:           "old withdraw stake request",
+			hash:           "ba379e2e3f7636cc7a00d867d3f5213a681c0331b603226c1efb04697e9432f4",
+			filenamePrefix: "old-withdraw-stake-request",
+		},
+		{
+			name:           "new withdraw stake request",
+			hash:           "ba379e2e3f7636cc7a00d867d3f5213a681c0331b603226c1efb04697e9432f4",
+			filenamePrefix: "new-withdraw-stake-request",
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {

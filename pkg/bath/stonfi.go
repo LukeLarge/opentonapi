@@ -1,25 +1,19 @@
 package bath
 
 import (
+	"math/big"
+
+	"github.com/tonkeeper/opentonapi/pkg/references"
 	"github.com/tonkeeper/tongo/tlb"
 	"github.com/tonkeeper/tongo/ton"
-	"math/big"
 
 	"github.com/tonkeeper/tongo"
 	"github.com/tonkeeper/tongo/abi"
 )
 
-type Dex string
-
-const (
-	Stonfi    Dex = "stonfi"
-	Megatonfi Dex = "megatonfi"
-	Dedust    Dex = "dedust"
-)
-
 // BubbleJettonSwap contains information about a jetton swap operation at a dex.
 type BubbleJettonSwap struct {
-	Dex        Dex
+	Dex        references.Dex
 	UserWallet tongo.AccountID
 	Router     tongo.AccountID
 	Out        assetTransfer
@@ -67,7 +61,7 @@ var StonfiSwapStraw = Straw[BubbleJettonSwap]{
 		return true
 	}},
 	Builder: func(newAction *BubbleJettonSwap, bubble *Bubble) error {
-		newAction.Dex = Stonfi
+		newAction.Dex = references.Stonfi
 		jettonTx := bubble.Info.(BubbleJettonTransfer)
 		newAction.UserWallet = jettonTx.sender.Address
 		newAction.In.Amount = big.Int(jettonTx.amount)
@@ -244,7 +238,7 @@ var StonfiSwapV2Straw = Straw[BubbleJettonSwap]{
 		return true
 	}},
 	Builder: func(newAction *BubbleJettonSwap, bubble *Bubble) error {
-		newAction.Dex = Stonfi
+		newAction.Dex = references.Stonfi
 		jettonTx := bubble.Info.(BubbleJettonTransfer)
 		newAction.UserWallet = jettonTx.sender.Address
 		newAction.In.Amount = big.Int(jettonTx.amount)
