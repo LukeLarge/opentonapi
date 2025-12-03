@@ -82,7 +82,7 @@ func convertJettonDecimals(decimals string) int32 {
 	if err != nil {
 		return 9
 	}
-	if dec < 0 || dec > math.MaxInt32 {
+	if dec < 0 || dec > 2147483647 { // 2147483647 == Max value for int32
 		return 9
 	}
 	return int32(dec)
