@@ -26,7 +26,10 @@ func CamelToSnake(s string) string {
 }
 
 func ChangeJsonKeys(input []byte, f func(s string) string) []byte {
-
+	// Guard against allocation overflow: reject very large input
+	if len(input) > 64*1024*1024 { // 64MB
+		return input // Or nil, or error handling as you prefer
+	}
 	buf := bytes.NewBuffer(make([]byte, 0, len(input)+8))
 	isMap := false
 	nextTokenIsKey := false
