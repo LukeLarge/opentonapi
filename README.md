@@ -36,4 +36,8 @@ ACCOUNTS="comma-separated-list-of-raw-account-addresses" make run
 
 ## Docker
 
-docker run -d -p8081:8081 tonkeeper/opentonapi 
+docker run -d -p8081:8081 tonkeeper/opentonapi
+
+## Security Scanning
+
+A manual security scanning workflow is available at `.github/workflows/security-scan.yml`. This is a workflow_dispatch-only workflow for maintainers to run pattern-based security scans. A local helper script `scan-repo.sh` is also provided for offline triage.

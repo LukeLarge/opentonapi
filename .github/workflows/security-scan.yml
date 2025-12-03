@@ -1,0 +1,40 @@
+name: Security Scan
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  quick-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run quick pattern scans
+        run: |
+          set -euo pipefail
+          out_dir="$GITHUB_WORKSPACE/security-scan-output"
+          mkdir -p "$out_dir"
+          echo "Scanning repo for suspicious patterns..." > "$out_dir/report.txt"
+          echo "" >> "$out_dir/report.txt"
+          # Suspicious CI downloads
+          (grep -RIn --exclude-dir=.git -e "curl -fsSL" -e "wget -qO" -e "sh -" || true) >> "$out_dir/report.txt"
+          # Dynamic exec/eval usage
+          (grep -RIn --exclude-dir=.git -e "eval(" -e "exec(" -e "popen(" -e "system(" || true) >> "$out_dir/report.txt"
+          # Base64/obfuscation patterns
+          (grep -RIn --exclude-dir=.git -E "base64_decode|fromCharCode|atob|btoa|\\x[0-9a-fA-F]{2,}" || true) >> "$out_dir/report.txt"
+          # Recent commits (30 days)
+          git --no-pager log --since="30 days ago" --pretty=format:"%h %ad %an %s" --date=iso | head -n 200 > "$out_dir/recent-commits.txt" || true
+          echo "Scan complete. Attach these artifacts for triage." >> "$out_dir/report.txt"
+          ls -la "$out_dir" >> "$out_dir/report.txt"
+          cat "$out_dir/report.txt"
+      - name: Upload scan artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-scan-output
+          path: security-scan-output
