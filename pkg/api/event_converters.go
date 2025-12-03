@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math/big"
+	"math"
 	"sort"
 	"strings"
 	"sync"
@@ -1045,7 +1046,11 @@ func (h *Handler) convertSubscribe(ctx context.Context, a *bath.SubscribeAction,
 	}
 	subscribeAction.Amount.SetTo(a.Price.Amount.Int64()) // for backward compatibility
 
-	value := i18n.FormatTokens(a.Price.Amount, int32(price.Decimals), price.TokenName)
+	decimals := price.Decimals
+	if decimals < 0 || decimals > math.MaxInt32 {
+		decimals = 9
+	}
+	value := i18n.FormatTokens(a.Price.Amount, int32(decimals), price.TokenName)
 
 	simplePreview := oas.ActionSimplePreview{
 		Name: "Subscription Charge",
