@@ -23,7 +23,7 @@ type NormalizedMetadata struct {
 	Description         string
 	Image               string
 	Symbol              string
-	Decimals            int
+	Decimals            int32
 	Verification        core.TrustType
 	Social              []string
 	Websites            []string
@@ -74,7 +74,7 @@ func NormalizeMetadata(addr ton.AccountID, meta tep64.Metadata, info *addressboo
 	}
 }
 
-func convertJettonDecimals(decimals string) int {
+func convertJettonDecimals(decimals string) int32 {
 	if decimals == "" {
 		return 9
 	}
@@ -85,5 +85,5 @@ func convertJettonDecimals(decimals string) int {
 	if dec < 0 || dec > math.MaxInt32 {
 		return 9
 	}
-	return dec
+	return int32(dec)
 }
