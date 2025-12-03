@@ -82,5 +82,8 @@ func convertJettonDecimals(decimals string) int {
 	if err != nil {
 		return 9
 	}
+	if dec < 0 || dec > math.MaxInt32 {
+		return 9
+	}
 	return dec
 }
